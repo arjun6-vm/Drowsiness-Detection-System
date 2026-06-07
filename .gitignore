@@ -1,0 +1,16 @@
+# Virtual environments
+.venv/
+new_env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# User configurations & environment files
+.env
+
+# Application logs & local database
+drowsiness_logs.csv
