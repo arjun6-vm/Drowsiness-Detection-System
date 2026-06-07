@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Drowsiness Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header style="background-color:#004080; color:white; padding:20px 0; text-align:center;">
+        <h1>Driver Safety System - Login</h1>
+    </header>
+
+    <main style="text-align: center; padding: 50px;">
+        <form method="POST">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <button type="submit">Login</button>
+        </form>
+        <p><a href="{{ url_for('signup') }}">Sign Up</a> | <a href="{{ url_for('forgot_password') }}">Forgot Password</a></p>
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Drowsiness Detection System</p>
+    </footer>
+</body>
+</html>

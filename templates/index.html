@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drowsiness Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header style="background-color:#004080; color:white; padding:20px 0; text-align:center;">
+        <h1>Driver Safety System</h1>
+        <p>Real-time monitoring to prevent accidents caused by driver fatigue</p>
+    </header>
+
+    <main>
+        <nav style="text-align: right; margin: 10px 20px;">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        <div style="display: flex; justify-content: center; margin: 20px;">
+            <section id="video-section">
+                <h2>Live Video Feed</h2>
+                <div id="location-status" style="background-color: #ffeba0; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: none;">
+                    📍 Checking location permissions...
+                </div>
+                <button id="retry-location-btn" style="display: none; margin-bottom: 10px; padding: 5px 10px; cursor: pointer;">
+                    🔄 Retry Location Access
+                </button>
+                <img src="{{ url_for('video_feed') }}" alt="Live Video Feed" style="width: 100%; max-width: 640px;">
+            </section>
+        </div>
+
+        <section id="features">
+            <h2>Features</h2>
+            <ul>
+                <li>Real-time eye tracking using computer vision</li>
+                <li>Automatic alert system for drowsiness detection</li>
+                <li>Comprehensive logging of events</li>
+                <li>Email notifications for emergencies</li>
+                <li>Report generation and download</li>
+            </ul>
+        </section>
+
+        <section id="team">
+            <h2>Team</h2>
+            <div class="team-member">
+                <h3>1. Ch.Vishnu Vardhan</h3>
+                <p>Kalasalingam University, Tamil Nadu, Krishnankoil</p>
+            </div>
+            <div class="team-member">
+                <h3>2. B.Manas</h3>
+                <p>Kalasalingam University, Tamil Nadu, Krishnankoil</p>
+            </div>
+            <div class="team-member">
+                <h3>3. G.Deva Narayana Reddy</h3>
+                <p>Kalasalingam University, Tamil Nadu, Krishnankoil</p>
+            </div>
+            <div class="team-member">
+                <h3>4. Ch.Bhanu Chandar</h3>
+                <p>Kalasalingam University, Tamil Nadu, Krishnankoil</p>
+            </div>
+        </section>
+
+        <section id="download">
+            <h2>Download Report</h2>
+            <a href="{{ url_for('download_report') }}" download>Download Drowsiness Report</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Drowsiness Detection System</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

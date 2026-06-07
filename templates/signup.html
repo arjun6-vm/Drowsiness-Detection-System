@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Drowsiness Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header style="background-color:#004080; color:white; padding:20px 0; text-align:center;">
+        <h1>Driver Safety System - Sign Up</h1>
+    </header>
+
+    <main style="text-align: center; padding: 50px;">
+        <form method="POST">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required><br><br>
+            <label for="favorite_car">What is your favorite car?</label>
+            <input type="text" id="favorite_car" name="favorite_car" required><br><br>
+            <label for="favorite_person">Who is your favorite person?</label>
+            <input type="text" id="favorite_person" name="favorite_person" required><br><br>
+            <button type="submit">Sign Up</button>
+        </form>
+        <p><a href="{{ url_for('login') }}">Back to Login</a></p>
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Drowsiness Detection System</p>
+    </footer>
+</body>
+</html>
