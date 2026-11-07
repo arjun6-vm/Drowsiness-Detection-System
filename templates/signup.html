@@ -3,36 +3,689 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Drowsiness Detection System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Sign Up - SafeDrive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='images/safedrive-logo.png') }}" type="image/png">
+    <style>
+        .login-body {
+            background-color: #050b14;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(220, 38, 38, 0.1) 0%, transparent 40%),
+                linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)),
+                url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIvPPHBhdGggZD0iTTAgMTBoNDBNMTAgMHY0MCIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3N2Zz4=');
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            padding: 20px 0;
+            box-sizing: border-box;
+        }
+
+        .split-login-wrapper {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .split-container {
+            display: flex;
+            width: 100%;
+            max-width: 1280px;
+            min-height: 780px;
+            background: #F8FAFC;
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: 0 35px 70px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .split-left {
+            position: relative;
+            width: 44%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .split-left-inner {
+            padding: 40px 40px 40px 50px;
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+
+        .login-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+        }
+        .text-charcoal { color: #0F172A; }
+        .text-blue { color: #2563EB; }
+
+        .login-subtitle {
+            color: #64748B;
+            font-size: 0.92rem;
+            margin: 0 0 20px 0;
+            font-weight: 500;
+        }
+
+                .alert-success {
+            background: #ECFDF5;
+            border-left: 4px solid #10B981;
+            color: #065F46;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .input-otp {
+            letter-spacing: 6px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .btn-link-modern {
+            background: none;
+            border: none;
+            color: #2563EB;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 12px;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        .btn-link-modern:hover {
+            color: #1D4ED8;
+        }
+        .btn-link-modern:disabled {
+            color: #94A3B8;
+            cursor: not-allowed;
+            text-decoration: none;
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            border-left: 4px solid #DC2626;
+            color: #991B1B;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .form-group-modern {
+            margin-bottom: 12px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            color: #94A3B8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .form-control-modern {
+            width: 100%;
+            padding: 12px 16px 12px 46px;
+            background: #F1F5F9;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            color: #0F172A;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .form-control-modern::placeholder { color: #94A3B8; }
+        .form-control-modern:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            background: #ffffff;
+        }
+
+        .password-toggle-btn {
+            position: absolute !important;
+            right: 14px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 6px !important;
+            cursor: pointer !important;
+            color: #94A3B8 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 10 !important;
+            transition: color 0.2s ease !important;
+            outline: none !important;
+        }
+        .password-toggle-btn:hover {
+            color: #2563EB !important;
+        }
+        .with-eye {
+            padding-right: 48px !important;
+        }
+
+        .btn-primary-modern {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 13px;
+            background: #2563EB;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 14px;
+            box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary-modern:hover {
+            background: #1D4ED8;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -4px rgba(37, 99, 235, 0.4);
+        }
+
+        .signup-link-container {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .text-muted-dark { color: #64748B; font-weight: 500; }
+        .signup-link { color: #2563EB; font-weight: 700; margin-left: 5px; text-decoration: none; }
+        .signup-link:hover { color: #1D4ED8; text-decoration: underline; }
+
+        .wave-container {
+            position: absolute;
+            right: -60px;
+            top: -50px;
+            height: calc(100% + 100px);
+            width: 120px;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .wave-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(5px 0 15px rgba(0,0,0,0.08));
+        }
+
+        /* Right Panel */
+        .split-right {
+            position: relative;
+            width: 56%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+            background: #F8FAFC;
+        }
+
+        .split-right::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+
+        .logo-showcase-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 36px 44px;
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 88%;
+            position: relative;
+            z-index: 2;
+        }
+        [data-theme="dark"] .logo-showcase-card {
+            background: #FFFFFF;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .right-logo-img {
+            max-width: 480px;
+            width: 80%;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.08));
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .right-logo-img:hover {
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 900px) {
+            .split-container {
+                flex-direction: column-reverse;
+                height: auto;
+                max-width: 500px;
+                border-radius: 24px;
+            }
+            .split-left { width: 100%; border-radius: 0 0 24px 24px; }
+            .split-right { width: 100%; padding: 40px; min-height: 200px; border-radius: 24px 24px 0 0; }
+            .wave-container { display: none; }
+            .split-left-inner { padding: 30px; max-width: 100%; }
+        }
+
+        /* Dark Theme Overrides */
+        [data-theme="dark"] .split-container {
+            background: #1E293B;
+            box-shadow: 0 35px 70px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+        [data-theme="dark"] .split-left {
+            background: #0B1121;
+        }
+        [data-theme="dark"] .text-charcoal { color: #ffffff; }
+        [data-theme="dark"] .login-title { color: #ffffff; }
+        [data-theme="dark"] .form-control-modern {
+            background: #1E293B;
+            border-color: #334155;
+            color: #ffffff;
+        }
+        [data-theme="dark"] .form-control-modern::placeholder { color: #64748B; }
+        [data-theme="dark"] .form-control-modern:focus { background: #0F172A; }
+        [data-theme="dark"] .split-right { background: #0B1121; }
+        [data-theme="dark"] .login-subtitle { color: #94A3B8; }
+        [data-theme="dark"] .wave-svg path[fill="#ffffff"] { fill: #0B1121; }
+    </style>
+
+    <script>
+        (function() {
+            const saved = localStorage.getItem('safedrive_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 </head>
-<body>
-    <header style="background-color:#004080; color:white; padding:20px 0; text-align:center;">
-        <h1>Driver Safety System - Sign Up</h1>
-    </header>
+<body class="login-body">
+    <!-- Top-Right Theme Toggle Pill -->
+    <div style="position:absolute;top:20px;right:20px;z-index:100;">
+        <div class="theme-pill" id="theme-toggle-btn" style="display:inline-flex; background:rgba(255,255,255,0.1); border-radius:20px; padding:3px; cursor:pointer; font-size:0.75rem; font-weight:600; align-items:center; border:1px solid rgba(255,255,255,0.15); user-select:none;">
+            <span class="theme-icon light-icon" style="padding:5px 12px; border-radius:15px; transition:all 0.2s; color:#fff;">LIGHT</span>
+            <span class="theme-icon dark-icon" style="padding:5px 12px; border-radius:15px; transition:all 0.2s; color:#fff;">DARK</span>
+        </div>
+    </div>
 
-    <main style="text-align: center; padding: 50px;">
-        <form method="POST">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required><br><br>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required><br><br>
-            <label for="confirm_password">Confirm Password:</label>
-            <input type="password" id="confirm_password" name="confirm_password" required><br><br>
-            <label for="favorite_car">What is your favorite car?</label>
-            <input type="text" id="favorite_car" name="favorite_car" required><br><br>
-            <label for="favorite_person">Who is your favorite person?</label>
-            <input type="text" id="favorite_person" name="favorite_person" required><br><br>
-            <button type="submit">Sign Up</button>
-        </form>
-        <p><a href="{{ url_for('login') }}">Back to Login</a></p>
-        {% if error %}
-        <p style="color: red;">{{ error }}</p>
-        {% endif %}
-    </main>
+    <div class="split-login-wrapper">
+        <div class="split-container">
+            <!-- Left Panel: Form -->
+            <div class="split-left">
+                <div class="split-left-inner">
+                    <h2 class="login-title"><span class="text-charcoal">CREATE</span> <span class="text-blue">ACCOUNT</span></h2>
+                    <p class="login-subtitle">Join SafeDrive intelligent driver safety system</p>
 
-    <footer>
-        <p>&copy; 2023 Drowsiness Detection System</p>
-    </footer>
+                    {% if error %}
+                    <div class="alert-error">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <div id="signup-alert-error" class="alert-error" style="display: none;"></div>
+                    <div id="signup-alert-success" class="alert-success" style="display: none;"></div>
+
+                    <!-- STEP 1: Details Form -->
+                    <div id="signup-step-1-view">
+                        <form id="signup-details-form" onsubmit="handleSendSignupOtp(event)">
+                            <!-- 1. Full Name -->
+                            <div class="form-group-modern">
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    </span>
+                                    <input type="text" id="signup-name" name="name" class="form-control-modern" placeholder="Full Name" required autocomplete="name">
+                                </div>
+                            </div>
+
+                            <!-- 2. Gender & Age side-by-side -->
+                            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 10px; margin-bottom: 12px;">
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                    </span>
+                                    <select id="signup-gender" name="gender" class="form-control-modern" required style="padding-left: 44px;">
+                                        <option value="" disabled selected>Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                        <option value="Prefer not to say">Prefer not to say</option>
+                                    </select>
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    </span>
+                                    <input type="number" id="signup-age" name="age" class="form-control-modern" placeholder="Age" min="16" max="120" required style="padding-left: 44px;">
+                                </div>
+                            </div>
+
+                            <!-- 3. Username -->
+                            <div class="form-group-modern">
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path></svg>
+                                    </span>
+                                    <input type="text" id="signup-username" name="username" class="form-control-modern" placeholder="Username" required autocomplete="username">
+                                </div>
+                            </div>
+
+                            <!-- 4. Email -->
+                            <div class="form-group-modern">
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                    </span>
+                                    <input type="email" id="signup-email" name="email" class="form-control-modern" placeholder="Email Address" required autocomplete="email">
+                                </div>
+                            </div>
+
+                            <!-- 5. Password with persistent eye toggle -->
+                            <div class="form-group-modern">
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    </span>
+                                    <input type="password" name="password" id="signup-password" class="form-control-modern with-eye" placeholder="Password (min. 6 characters)" required autocomplete="new-password">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signup-password', this)" title="Show/Hide Password" tabindex="-1">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 6. Confirm Password with persistent eye toggle -->
+                            <div class="form-group-modern">
+                                <div class="input-wrapper">
+                                    <span class="input-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    </span>
+                                    <input type="password" name="confirm_password" id="signup-confirm-password" class="form-control-modern with-eye" placeholder="Confirm Password" required autocomplete="new-password">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signup-confirm-password', this)" title="Show/Hide Password" tabindex="-1">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary-modern" id="btn-signup-submit">
+                                <span>CONTINUE TO VERIFY EMAIL</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- STEP 2: OTP Verification Interface -->
+                    <div id="signup-step-2-view" style="display: none;">
+                        <form id="signup-otp-form" onsubmit="handleVerifySignupOtp(event)">
+                            <div class="form-group-modern">
+                                <label style="display:block; font-size:0.85rem; font-weight:700; color:var(--text-primary); margin-bottom:6px;">Enter Verification OTP</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="signup-otp-input" class="form-control-modern input-otp" placeholder="______" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code">
+                                </div>
+                                <span style="display:block; font-size:0.8rem; color:#64748B; margin-top:6px; text-align:center;">Valid for 5 minutes. Check your email inbox.</span>
+                            </div>
+
+                            <button type="submit" class="btn-primary-modern" id="btn-verify-signup-otp">
+                                <span>VERIFY & COMPLETE SIGNUP</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </button>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+                                <button type="button" class="btn-link-modern" onclick="handleBackToStep1()">
+                                    &larr; Edit Details
+                                </button>
+                                <button type="button" class="btn-link-modern" id="btn-resend-signup-otp" onclick="handleResendSignupOtp()">
+                                    Resend Code
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="signup-link-container">
+                        <span class="text-muted-dark">Already have an account?</span>
+                        <a href="{{ url_for('login') }}" class="signup-link">Sign In</a>
+                    </div>
+                </div>
+
+                <!-- Wave curve divider matching login -->
+                <div class="wave-container">
+                    <svg class="wave-svg" viewBox="0 0 100 1000" preserveAspectRatio="none">
+                        <path d="M0,0 Q100,250 50,500 T100,1000 L0,1000 Z" fill="#ffffff" />
+                        <path d="M0,0 Q100,250 50,500 T100,1000" fill="none" stroke="url(#wave-gradient)" stroke-width="3" />
+                        <defs>
+                            <linearGradient id="wave-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#2563EB" />
+                                <stop offset="50%" stop-color="#ffffff" />
+                                <stop offset="100%" stop-color="#DC2626" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right Panel: Brand Visual -->
+            <div class="split-right">
+                <img src="{{ url_for('static', filename='images/safedrive-logo.png') }}" alt="SafeDrive Official Logo" class="right-logo-img">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePasswordVisibility(fieldId, btn) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            const isPassword = field.type === 'password';
+            field.type = isPassword ? 'text' : 'password';
+            if (isPassword) {
+                btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+                btn.setAttribute('title', 'Hide Password');
+            } else {
+                btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                btn.setAttribute('title', 'Show Password');
+            }
+        }
+        let activeSignupId = null;
+        let cachedSignupData = null;
+
+        function clearAlerts() {
+            const err = document.getElementById('signup-alert-error');
+            const succ = document.getElementById('signup-alert-success');
+            if (err) { err.style.display = 'none'; err.innerText = ''; }
+            if (succ) { succ.style.display = 'none'; succ.innerText = ''; }
+        }
+
+        function showSignupError(msg) {
+            clearAlerts();
+            const el = document.getElementById('signup-alert-error');
+            if (el) { el.innerText = msg; el.style.display = 'block'; }
+        }
+
+        function showSignupSuccess(msg) {
+            clearAlerts();
+            const el = document.getElementById('signup-alert-success');
+            if (el) { el.innerText = msg; el.style.display = 'block'; }
+        }
+
+        async function handleSendSignupOtp(e) {
+            if (e) e.preventDefault();
+            clearAlerts();
+
+            const name = document.getElementById('signup-name').value.trim();
+            const gender = document.getElementById('signup-gender').value;
+            const age = document.getElementById('signup-age').value.trim();
+            const username = document.getElementById('signup-username').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirm_password = document.getElementById('signup-confirm-password').value;
+
+            if (!name || !gender || !age || !username || !email || !password || !confirm_password) {
+                showSignupError('All fields are required.');
+                return;
+            }
+
+            if (password !== confirm_password) {
+                showSignupError('Passwords do not match.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showSignupError('Password must be at least 6 characters.');
+                return;
+            }
+
+            cachedSignupData = { name, gender, age, username, email, password, confirm_password };
+
+            const btn = document.getElementById('btn-signup-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Sending Verification Code...</span>';
+
+            try {
+                const resp = await fetch('/api/signup/send_otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cachedSignupData)
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    activeSignupId = data.signup_id;
+                    showSignupSuccess(data.message || 'Verification code sent to your email.');
+                    document.getElementById('signup-step-1-view').style.display = 'none';
+                    document.getElementById('signup-step-2-view').style.display = 'block';
+                    document.getElementById('signup-otp-input').focus();
+                } else {
+                    showSignupError(data.error || 'Failed to send verification code.');
+                }
+            } catch (err) {
+                showSignupError('Network error while requesting verification code.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>CONTINUE TO VERIFY EMAIL</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+            }
+        }
+
+        async function handleVerifySignupOtp(e) {
+            if (e) e.preventDefault();
+            clearAlerts();
+
+            const otp = document.getElementById('signup-otp-input').value.trim();
+            if (!otp || otp.length !== 6) {
+                showSignupError('Please enter the complete 6-digit OTP code.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-verify-signup-otp');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Verifying...</span>';
+
+            try {
+                const resp = await fetch('/api/signup/verify_otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signup_id: activeSignupId, otp: otp })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showSignupSuccess(data.message || 'Account verified! Redirecting to login...');
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/login';
+                    }, 1200);
+                } else {
+                    if (data.expired) {
+                        showSignupError(data.error || 'Verification session expired. Please request a new code.');
+                    } else {
+                        showSignupError(data.error || 'Incorrect verification code.');
+                    }
+                }
+            } catch (err) {
+                showSignupError('Network error while verifying code.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>VERIFY & COMPLETE SIGNUP</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            }
+        }
+
+        function handleBackToStep1() {
+            clearAlerts();
+            document.getElementById('signup-step-2-view').style.display = 'none';
+            document.getElementById('signup-step-1-view').style.display = 'block';
+        }
+
+        async function handleResendSignupOtp() {
+            if (!cachedSignupData) {
+                handleBackToStep1();
+                return;
+            }
+            clearAlerts();
+
+            const resendBtn = document.getElementById('btn-resend-signup-otp');
+            resendBtn.disabled = true;
+            resendBtn.innerText = 'Sending...';
+
+            try {
+                const resp = await fetch('/api/signup/send_otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cachedSignupData)
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    activeSignupId = data.signup_id;
+                    showSignupSuccess('A new verification code has been sent to your email.');
+                    document.getElementById('signup-otp-input').value = '';
+                } else {
+                    showSignupError(data.error || 'Failed to resend code.');
+                }
+            } catch (err) {
+                showSignupError('Network error while resending code.');
+            } finally {
+                setTimeout(() => {
+                    resendBtn.disabled = false;
+                    resendBtn.innerText = 'Resend Code';
+                }, 10000);
+            }
+        }
+    </script>
 </body>
 </html>

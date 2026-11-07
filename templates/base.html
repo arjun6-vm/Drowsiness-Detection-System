@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SafeDrive{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/safedrive-logo.png') }}">
+
+    <!-- Instant theme initialization before DOM render prevents flash of wrong theme -->
+    <script>
+        (function() {
+            const saved = localStorage.getItem('safedrive_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/permissions.js') }}"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Mobile Sidebar Backdrop -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+        <!-- Left Sidebar Navigation -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('live_monitor') }}" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+                    <div class="sidebar-logo-badge" style="background: #FFFFFF; border-radius: 8px; padding: 4px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0;">
+                        <img src="{{ url_for('static', filename='images/safedrive-logo.png') }}" alt="SafeDrive Logo" class="sidebar-logo-img" style="height: 30px; width: auto; object-fit: contain; display: block;">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <span class="sidebar-brand-title">SafeDrive</span>
+                        <span class="sidebar-brand-sub">Driver Safety AI</span>
+                    </div>
+                </a>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('live_monitor') }}" class="{% if request.endpoint == 'live_monitor' %}active{% endif %}">
+                        <span class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </span>
+                        <span>Live Monitor</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('safety_events') }}" class="{% if request.endpoint == 'safety_events' %}active{% endif %}">
+                        <span class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </span>
+                        <span>Safety Events</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('emergency_contacts') }}" class="{% if request.endpoint == 'emergency_contacts' %}active{% endif %}">
+                        <span class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                        </span>
+                        <span>Emergency Contacts</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('settings') }}" class="{% if request.endpoint == 'settings' %}active{% endif %}">
+                        <span class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </span>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('help') }}" class="{% if request.endpoint == 'help' %}active{% endif %}">
+                        <span class="nav-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </span>
+                        <span>Help & About</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" id="sidebar-logout-link">
+                    <span class="nav-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </span>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle navigation">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="topbar-page-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        SafeDrive Safety Console
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- System Status Badge -->
+                    <div class="status-badge-online">
+                        <span class="pulse-dot"></span>
+                        <span>System Online</span>
+                    </div>
+
+                    <!-- Theme Toggle Pill -->
+                    <div class="theme-pill" id="theme-toggle-btn" role="button" tabindex="0" title="Toggle Theme">
+                        <span class="theme-icon light-icon">LIGHT</span>
+                        <span class="theme-icon dark-icon">DARK</span>
+                    </div>
+
+                    <!-- User Profile Pill (Shortcut to Settings Profile) -->
+                    <a href="{{ url_for('settings') }}#profile-section" class="user-pill" id="topbar-user-profile-link" title="View Profile in Settings" style="text-decoration: none; cursor: pointer;">
+                        <div class="user-avatar">{{ session.get('user', 'U')[0]|upper }}</div>
+                        <span class="user-name-text" id="logged-in-username">{{ session.get('user', 'User') }}</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Dynamic Page Content -->
+            <main class="page-content">
+                <div class="content-container">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- FIRST-LOGIN PERMISSION ONBOARDING MODAL -->
+    {% if session.get('user') %}
+    <div id="first-login-modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 20px; max-width: 460px; width: 100%; padding: 32px; box-shadow: var(--shadow-xl); position: relative; animation: modalPop 0.25s ease-out;">
+
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--brand-blue-subtle); color: var(--brand-blue); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin: 0;">SafeDrive needs your attention</h3>
+                <p style="font-size: 0.92rem; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
+                    For SafeDrive to monitor your driving safely, please allow the following permissions:
+                </p>
+            </div>
+
+            <!-- Permission Items -->
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px;">
+                <!-- Camera Item -->
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 12px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle);">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span style="display:flex; align-items:center; justify-content:center; color:var(--brand-blue);">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        </span>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">Camera</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Required for driver drowsiness monitoring.</div>
+                        </div>
+                    </div>
+                    <span id="modal-cam-badge" class="status-stat-value badge-neutral">Checking...</span>
+                </div>
+
+                <!-- Location Item -->
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 12px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle);">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span style="display:flex; align-items:center; justify-content:center; color:var(--brand-blue);">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                        </span>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">Location</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Used for location-related emergency functionality.</div>
+                        </div>
+                    </div>
+                    <span id="modal-loc-badge" class="status-stat-value badge-neutral">Checking...</span>
+                </div>
+            </div>
+
+            <!-- Status message area if permission denied -->
+            <div id="modal-status-msg" style="display: none; padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; margin-bottom: 14px; line-height: 1.4;"></div>
+
+            <!-- Allow Permissions Button -->
+            <button type="button" class="btn-primary-action" id="btn-modal-request-perms" onclick="handleModalRequestPermissions()" style="width: 100%; justify-content: center; padding: 14px; font-size: 0.98rem; font-weight: 700; margin-bottom: 14px;">
+                Allow Camera & Location
+            </button>
+
+            <!-- Guide & Navigation Notes -->
+            <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.4; margin: 0 0 8px 0;">
+                You can manage these permissions later from Settings.
+            </p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin: 0;">
+                Having trouble? <a href="{{ url_for('help') }}" style="color: var(--brand-blue); font-weight: 700; text-decoration: underline;">Check Help & About</a> for instructions.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('app-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (sidebar && backdrop) {
+            sidebar.classList.toggle('open');
+            backdrop.classList.toggle('active');
+        }
+    }
+
+    // Protection against drag/download on media
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.nodeName === 'IMG' || e.target.nodeName === 'VIDEO') {
+            e.preventDefault();
+        }
+    });
+
+    // Global persistent password visibility toggle
+    function togglePasswordVisibility(fieldId, btn) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+        const isPassword = field.type === 'password';
+        field.type = isPassword ? 'text' : 'password';
+        if (isPassword) {
+            btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+            btn.setAttribute('title', 'Hide Password');
+        } else {
+            btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+            btn.setAttribute('title', 'Show Password');
+        }
+    }
+
+    // First Login Permission Modal Logic
+    const currentUsername = document.getElementById('logged-in-username') ? document.getElementById('logged-in-username').innerText.trim() : '';
+
+    function updateModalBadge(badge, state) {
+        if (!badge) return;
+        if (state === 'granted') {
+            badge.className = 'status-stat-value badge-active';
+            badge.innerText = 'Allowed';
+        } else if (state === 'denied') {
+            badge.className = 'status-stat-value badge-stopped';
+            badge.innerText = 'Denied';
+        } else {
+            badge.className = 'status-stat-value badge-paused';
+            badge.innerText = 'Not Granted';
+        }
+    }
+
+    function syncModalUI(perms) {
+        const camBadge = document.getElementById('modal-cam-badge');
+        const locBadge = document.getElementById('modal-loc-badge');
+        const modal = document.getElementById('first-login-modal-backdrop');
+        if (camBadge) updateModalBadge(camBadge, perms.camera);
+        if (locBadge) updateModalBadge(locBadge, perms.location);
+
+        // If both are granted, close modal automatically
+        if (perms.camera === 'granted' && perms.location === 'granted') {
+            if (modal) modal.style.display = 'none';
+            if (currentUsername) {
+                localStorage.setItem('safedrive_onboarding_shown_' + currentUsername, 'true');
+            }
+        }
+    }
+
+    async function handleModalRequestPermissions() {
+        const btn = document.getElementById('btn-modal-request-perms');
+        const msg = document.getElementById('modal-status-msg');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Requesting Permissions...';
+        }
+
+        try {
+            if (window.SafeDrivePermissions) {
+                // Request camera if not granted
+                if (SafeDrivePermissions.cameraStatus !== 'granted') {
+                    await SafeDrivePermissions.requestCamera();
+                }
+                // Request location if not granted
+                if (SafeDrivePermissions.locationStatus !== 'granted') {
+                    await SafeDrivePermissions.requestLocation();
+                }
+                const res = await SafeDrivePermissions.checkAll();
+                syncModalUI(res);
+
+                if (res.camera === 'granted' && res.location === 'granted') {
+                    const modal = document.getElementById('first-login-modal-backdrop');
+                    if (modal) modal.style.display = 'none';
+                    if (currentUsername) {
+                        localStorage.setItem('safedrive_onboarding_shown_' + currentUsername, 'true');
+                    }
+                } else {
+                    if (msg) {
+                        msg.style.display = 'block';
+                        msg.style.background = '#FEF2F2';
+                        msg.style.color = '#991B1B';
+                        msg.style.border = '1px solid #FCA5A5';
+                        const missing = [];
+                        if (res.camera !== 'granted') missing.push('Camera');
+                        if (res.location !== 'granted') missing.push('Location');
+                        msg.innerText = missing.join(' and ') + ' permission is still required. Please allow via browser prompt or site settings.';
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Modal permission request error:', e);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Allow Camera & Location';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (currentUsername && window.SafeDrivePermissions) {
+            const perms = await SafeDrivePermissions.checkAll();
+            syncModalUI(perms);
+
+            // If BOTH are already granted, do NOT show popup!
+            if (perms.camera === 'granted' && perms.location === 'granted') {
+                return;
+            }
+
+            // If either is not granted, check if onboarding was already dismissed
+            const hasSeen = localStorage.getItem('safedrive_onboarding_shown_' + currentUsername);
+            const modal = document.getElementById('first-login-modal-backdrop');
+            if (!hasSeen && modal) {
+                modal.style.display = 'flex';
+            }
+        }
+    });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,64 +1,353 @@
-body {
-    font-family: Arial, sans-serif;
+:root {
+    --bg-navy: #050811;
+    --card-bg: rgba(14, 20, 35, 0.75);
+    --border-color: rgba(30, 41, 59, 0.5);
+    --border-cyan: rgba(0, 212, 255, 0.2);
+    --border-pink: rgba(255, 0, 106, 0.2);
+    --accent-cyan: #00d4ff;
+    --accent-pink: #ff006a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+}
+
+* {
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
 }
 
-header {
-    background-color: #004080;
-    color: white;
-    padding: 20px 0;
-    text-align: center;
+body {
+    background-color: var(--bg-navy);
+    color: var(--text-main);
+    min-height: 100vh;
+    background-image: radial-gradient(circle at 15% 50%, rgba(0, 212, 255, 0.05), transparent 25%),
+                      radial-gradient(circle at 85% 30%, rgba(255, 0, 106, 0.05), transparent 25%);
+    background-attachment: fixed;
 }
 
-h1 {
-    margin: 0;
-}
+/* Typography */
+h1, h2, h3, h4 { color: var(--text-main); font-weight: 600; }
+a { color: var(--accent-cyan); text-decoration: none; transition: 0.2s; }
+a:hover { color: #fff; }
 
-main {
-    padding: 20px;
-    max-width: 900px;
-    margin: 0 auto;
+/* Logo */
+.brand-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
 }
-
-#video-section img {
-    border: 3px solid #007bff;
-    border-radius: 5px;
-    max-width: 100%;
+.safedrive-logo {
+    display: block;
+    width: min(100%, 420px);
     height: auto;
+    object-fit: contain;
+}
+.safedrive-logo--nav { max-width: 180px; }
+.safedrive-logo--auth { max-width: 300px; margin: 0 auto; }
+.safedrive-logo--landing { max-width: 500px; margin: 0 auto; }
+
+/* Public Pages Layout (Centered) */
+.public-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
 }
 
-#features ul {
-    list-style-type: disc;
-    padding-left: 20px;
+/* Glow Elements */
+.glow-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.02);
+    backdrop-filter: blur(10px);
+}
+.glow-box.wide { max-width: 800px; }
+
+/* Forms */
+.form-group { margin-bottom: 20px; position: relative; }
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
 }
 
-#team .team-member {
-    background-color: white;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
-}
-
-#download a {
-    display: inline-block;
-    padding: 10px 15px;
-    background-color: #007bff;
+/* Buttons */
+.btn-primary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-pink);
     color: white;
-    text-decoration: none;
-    border-radius: 5px;
-}
-
-#download a:hover {
-    background-color: #0056b3;
-}
-
-footer {
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
     text-align: center;
-    padding: 15px 0;
-    background-color: #004080;
-    color: white;
+}
+.btn-primary:hover {
+    background: #e6005f;
+    box-shadow: 0 0 15px rgba(255, 0, 106, 0.4);
+}
+
+.text-center { text-align: center; }
+.mt-3 { margin-top: 15px; }
+.mt-4 { margin-top: 25px; }
+
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
     margin-top: 20px;
+}
+
+/* Split Login Styling */
+.split-login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.split-container {
+    display: flex;
+    width: 100%;
+    max-width: 1100px;
+    height: 700px;
+    background: var(--card-bg);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.split-left {
+    position: relative;
+    width: 45%;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #1e293b; /* Charcoal text */
+}
+
+.split-left-inner {
+    padding: 60px;
+    z-index: 10;
+    position: relative;
+}
+
+.safedrive-logo--split {
+    max-width: 200px;
+    margin-bottom: 40px;
+}
+
+.login-title {
+    font-size: 2rem;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin-bottom: 5px;
+}
+
+.login-subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+}
+
+/* Forms - Modern Light */
+.form-group-modern {
+    margin-bottom: 20px;
+}
+.form-group-modern label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #475569;
+}
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-icon {
+    position: absolute;
+    left: 15px;
+    color: #94a3b8;
+}
+.form-control-modern {
+    width: 100%;
+    padding: 12px 16px 12px 45px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #0f172a;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+.form-control-modern:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+    background: #ffffff;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    color: #94a3b8;
+    user-select: none;
+}
+
+.auth-links-modern {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin: 20px 0 25px 0;
+}
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    font-weight: 500;
+}
+.forgot-link {
+    color: #00d4ff;
+    font-weight: 600;
+}
+.forgot-link:hover { color: #0284c7; }
+
+.btn-primary-modern {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: #0ea5e9; /* SafeDrive Blue */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+}
+.btn-primary-modern:hover {
+    background: #0284c7;
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+    transform: translateY(-1px);
+}
+
+.signup-link-container {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.9rem;
+}
+.text-muted-dark { color: #64748b; }
+.signup-link { color: #ff006a; font-weight: 700; margin-left: 5px; }
+.signup-link:hover { color: #e1005a; }
+
+.alert-error {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.split-curve {
+    position: absolute;
+    right: -1px;
+    top: 0;
+    height: 100%;
+    width: 40px;
+    z-index: 5;
+}
+
+/* Right Panel */
+.split-right {
+    position: relative;
+    width: 55%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+    padding: 60px;
+}
+.split-right-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.1)),
+                linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, transparent 60%);
+    z-index: 1;
+}
+.split-right-content {
+    position: relative;
+    z-index: 2;
+}
+.visual-text-large {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 15px;
+    letter-spacing: -1px;
+}
+.visual-text-medium {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+.visual-text-small {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .split-container { flex-direction: column; height: auto; min-height: 100vh; border-radius: 0; }
+    .split-left, .split-right { width: 100%; }
+    .split-curve { display: none; }
+    .split-left-inner { padding: 40px 20px; }
+    .split-right { min-height: 300px; }
 }

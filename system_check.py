@@ -19,7 +19,7 @@ except ImportError as e:
 try:
     import mediapipe as mp
     print_status("MediaPipe", True, mp.__version__)
-    
+
     # Try initializing Face Mesh to ensure model loads
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1)
@@ -74,13 +74,17 @@ import smtplib
 # from location_email_alert import send_location_email
 
 # Extract credentials from the actual file to test them
-# Note: We are doing a static analysis extraction or just importing if possible, 
+# Note: We are doing a static analysis extraction or just importing if possible,
 # but simply trying to login is the best test.
 try:
-    # Hardcoded credentials from location_email_alert.py as observed in file
-    sender_email = "c.arjun6623@gmail.com"
-    sender_password = "YOUR_APP_PASSWORD_HERE" 
-    
+    # Load credentials strictly from environment
+    from dotenv import load_dotenv
+    load_dotenv()
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+    if sender_password:
+        sender_password = sender_password.strip().replace(" ", "")
+
     # Test SSL Connection (Port 465)
     try:
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)

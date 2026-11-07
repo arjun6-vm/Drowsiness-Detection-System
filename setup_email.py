@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 """
 Setup script for email configuration
-Run this once to configure email credentials for emergency alerts
+Configures email credentials for emergency alerts via environment variables or .env file
 """
 
 import os
+from dotenv import load_dotenv
 
-# Email configuration
-SENDER_EMAIL = "c.arjun6623@gmail.com"
-SENDER_PASSWORD = "YOUR_APP_PASSWORD_HERE"
+# Load credentials from .env if present
+load_dotenv()
 
-# Set environment variables
-os.environ['SENDER_EMAIL'] = SENDER_EMAIL
-os.environ['SENDER_PASSWORD'] = SENDER_PASSWORD
+# Email configuration loaded strictly from environment
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 
-print("✅ Email configuration set successfully!")
-print(f"Sender Email: {SENDER_EMAIL}")
-print("App Password: [HIDDEN FOR SECURITY]")
-print("\n🚀 Your drowsiness detection system is now ready with emergency email alerts!")
-print("The system will send detailed location information when drowsiness is detected.")
+if SENDER_PASSWORD:
+    SENDER_PASSWORD = SENDER_PASSWORD.strip().replace(" ", "")
+
+if SENDER_EMAIL and SENDER_PASSWORD:
+    print("Email configuration loaded successfully from environment!")
+    print(f"Sender Email: {SENDER_EMAIL}")
+    print("App Password: [CONFIGURED IN ENVIRONMENT]")
+else:
+    print("Email credentials are not configured in environment or .env file.")
+    print("Please set SENDER_EMAIL and SENDER_PASSWORD in your .env file.")

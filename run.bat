@@ -1,3 +1,2 @@
 @echo off
-call new_env\Scripts\activate.bat
-python app.py
+.\new_env\Scripts\python.exe app.py

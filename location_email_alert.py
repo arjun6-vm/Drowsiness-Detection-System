@@ -97,10 +97,19 @@ TIMESTAMP: {time.strftime('%Y-%m-%d %H:%M:%S')}
 This is an automated emergency alert from the Drowsiness Detection System.
 """
 
+        from dotenv import load_dotenv
+        load_dotenv(override=True)
+
         # Email credentials (configured for emergency alerts)
-        sender_email = "c.arjun6623@gmail.com"
-        sender_password = "YOUR_APP_PASSWORD_HERE"  # Gmail app password
-    
+        sender_email = os.getenv("SENDER_EMAIL", "c.arjun6623@gmail.com")
+        sender_password = os.getenv("SENDER_PASSWORD")
+        if sender_password:
+            sender_password = sender_password.replace(" ", "")
+
+        if not sender_password:
+            print("❌ SENDER_PASSWORD not found in environment variables.")
+            raise ValueError("Email password not configured")
+
         msg = MIMEText(body)
         msg['Subject'] = subject
         msg['From'] = sender_email
@@ -113,12 +122,12 @@ This is an automated emergency alert from the Drowsiness Detection System.
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
                 server.login(sender_email, sender_password)
                 server.send_message(msg)
-                print("🚀 Emergency email sent successfully with detailed location data.")
+                print("Emergency email sent successfully with detailed location data.")
         except Exception as e:
-            print(f"❌ Failed to send email: {e}")
+            print(f"Failed to send email: {e}")
             raise  # Re-raise to allow logging in app.py
     else:
-        print("❌ Could not fetch location.")
+        print("Could not fetch location.")
         raise ValueError("Location fetch failed")
 
 # Example call (trigger this after 4th alert)

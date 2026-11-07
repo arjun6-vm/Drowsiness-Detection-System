@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Safety Events - SafeDrive{% endblock %}
+
+{% block content %}
+<div class="page-header-banner">
+    <div>
+        <h1 class="page-title">Safety Events</h1>
+        <p class="page-subtitle">Real-time log of driver alertness events, system states, and safety alerts</p>
+    </div>
+    <div>
+        <a href="{{ url_for('download_report') }}" class="btn-primary-action" id="btn-download-csv">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            DOWNLOAD CSV
+        </a>
+    </div>
+</div>
+
+<div class="safe-card">
+    <div class="safe-card-header">
+        <div>
+            <div class="safe-card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                Safety Event History
+            </div>
+            <div class="safe-card-subtitle">Displaying verified monitoring records stored in local database</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="safe-table">
+            <thead>
+                <tr>
+                    <th style="width: 220px;">Timestamp</th>
+                    <th style="width: 160px;">Event Type</th>
+                    <th>Message & Details</th>
+                    <th style="width: 120px;">Warning Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if events and events|length > 0 %}
+                    {% for event in events %}
+                    <tr>
+                        <td style="font-family: monospace; font-size: 0.85rem; color: var(--text-muted);">
+                            {{ event.timestamp }}
+                        </td>
+                        <td>
+                            {% if event.event_type == 'alert' %}
+                                <span class="event-type-badge badge-alert">Alert</span>
+                            {% elif event.event_type == 'warning' %}
+                                <span class="event-type-badge badge-warning">Warning</span>
+                            {% elif event.event_type == 'reset' %}
+                                <span class="event-type-badge badge-reset">Reset</span>
+                            {% elif event.event_type == 'STARTED' %}
+                                <span class="event-type-badge badge-active">Started</span>
+                            {% elif event.event_type == 'RESUMED' %}
+                                <span class="event-type-badge badge-active">Resumed</span>
+                            {% elif event.event_type == 'PAUSED' %}
+                                <span class="event-type-badge badge-paused">Paused</span>
+                            {% elif event.event_type == 'STOPPED' %}
+                                <span class="event-type-badge badge-stopped">Stopped</span>
+                            {% elif event.event_type == 'email' %}
+                                <span class="event-type-badge badge-email">Emergency Email</span>
+                            {% elif event.event_type == 'error' %}
+                                <span class="event-type-badge badge-alert">Error</span>
+                            {% else %}
+                                <span class="event-type-badge badge-neutral">{{ event.event_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-weight: 500;">
+                            {{ event.message }}
+                        </td>
+                        <td>
+                            {% if event.display_warning_level %}
+                                <span style="font-weight: 700; color: var(--text-primary);">Level {{ event.display_warning_level }}</span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                <span style="font-size: 0.95rem; font-weight: 500;">No safety events recorded yet.</span>
+                                <span style="font-size: 0.82rem; color: var(--text-muted);">Events will automatically appear here as driver monitoring occurs.</span>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

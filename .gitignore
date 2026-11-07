@@ -11,6 +11,8 @@ __pycache__/
 
 # User configurations & environment files
 .env
+*.env
+venv/
 
 # Application logs & local database
 drowsiness_logs.csv
