@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeDrive - AI-Powered Driver Safety</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='images/safedrive-logo.png') }}" type="image/png">
+    <style>
+        /* CSS reset & base */
+        :root {
+            --primary-blue: #2563EB;
+            --deep-navy: #0F172A;
+            --charcoal: #1F2937;
+            --ai-red: #E85D75;
+            --emergency-red: #DC2626;
+            --safe-green: #16A34A;
+            --light-bg: #F8FAFC;
+            --border-color: #E2E8F0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        html { scroll-behavior: smooth; }
+        body { background-color: var(--light-bg); color: var(--charcoal); line-height: 1.6; overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; }
+
+        /* Navigation */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 5%;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .nav-logo img { height: 45px; width: auto; object-fit: contain; }
+        .nav-links { display: flex; gap: 30px; font-weight: 600; color: var(--deep-navy); }
+        .nav-links a:hover { color: var(--primary-blue); }
+        .nav-auth { display: flex; gap: 15px; }
+        .btn-outline {
+            padding: 10px 20px; border: 2px solid var(--primary-blue); border-radius: 8px;
+            color: var(--primary-blue); font-weight: 600; transition: 0.2s;
+        }
+        .btn-outline:hover { background: var(--primary-blue); color: white; }
+        .btn-solid {
+            padding: 10px 20px; background: var(--primary-blue); border-radius: 8px;
+            color: white; font-weight: 600; transition: 0.2s; border: 2px solid var(--primary-blue);
+        }
+        .btn-solid:hover { background: #1D4ED8; border-color: #1D4ED8; }
+
+        /* Hero Section */
+        .hero {
+            padding: 140px 5% 80px;
+            background: #0B1121;
+            color: #FFFFFF;
+            position: relative;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.25) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(220, 38, 38, 0.18) 0%, transparent 40%);
+        }
+        .hero-container {
+            max-width: 1400px; margin: 0 auto;
+            display: flex; gap: 60px; align-items: center;
+        }
+        .hero-text { flex: 1; z-index: 2; }
+        .hero-media { flex: 1; z-index: 2; position: relative; }
+
+        .hero-tagline { font-size: 1rem; font-weight: 700; color: var(--primary-blue); letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase; }
+        .hero-title { font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
+        .hero-subtitle { font-size: 1.3rem; font-weight: 600; color: #94A3B8; margin-bottom: 25px; }
+        .hero-desc { font-size: 1.15rem; color: #CBD5E1; margin-bottom: 40px; max-width: 95%; }
+
+        .btn-large {
+            display: inline-block; padding: 16px 40px; background: var(--primary-blue);
+            color: white; font-size: 1.15rem; font-weight: 700; border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); transition: 0.3s;
+        }
+        .btn-large:hover { background: #1D4ED8; transform: translateY(-2px); box-shadow: 0 15px 25px rgba(37, 99, 235, 0.4); }
+
+        /* Video Container */
+        .video-wrapper {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 12px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .hero-video {
+            width: 100%; height: auto;
+            border-radius: 12px;
+            display: block;
+            object-fit: contain;
+            background: black;
+        }
+
+        /* Hero Highlights */
+        .hero-highlights {
+            display: flex; gap: 30px; margin-top: 50px;
+        }
+        .highlight-item { display: flex; align-items: center; gap: 15px; }
+        .highlight-icon {
+            width: 45px; height: 45px; border-radius: 50%; background: rgba(37, 99, 235, 0.2);
+            display: flex; align-items: center; justify-content: center; color: #60A5FA;
+            font-size: 1.2rem;
+        }
+        .highlight-text h4 { font-size: 1rem; color: white; margin-bottom: 2px;}
+        .highlight-text p { font-size: 0.85rem; color: #94A3B8; }
+
+        /* Sections */
+        .section { padding: 100px 5%; max-width: 1400px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 70px; }
+        .section-label { font-size: 0.95rem; font-weight: 700; color: var(--primary-blue); letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase; }
+        .section-title { font-size: 3rem; font-weight: 800; color: var(--deep-navy); margin-bottom: 20px; }
+        .section-subtitle { font-size: 1.2rem; color: #64748B; max-width: 800px; margin: 0 auto; }
+
+        /* How It Works */
+        .workflow {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            position: relative; margin-top: 50px;
+        }
+        .workflow::before {
+            content: ''; position: absolute; top: 45px; left: 60px; right: 60px;
+            height: 3px; background: var(--border-color); z-index: 1;
+        }
+        .step { flex: 1; text-align: center; position: relative; z-index: 2; padding: 0 20px; }
+        .step-icon {
+            width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 25px;
+            display: flex; align-items: center; justify-content: center;
+            background: white; border: 4px solid white; box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            font-size: 2.5rem; color: white;
+        }
+        .step:nth-child(1) .step-icon { background: var(--primary-blue); }
+        .step:nth-child(2) .step-icon { background: var(--ai-red); }
+        .step:nth-child(3) .step-icon { background: var(--emergency-red); }
+        .step:nth-child(4) .step-icon { background: var(--deep-navy); }
+
+        .step-num {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-140%);
+            width: 32px; height: 32px; background: var(--deep-navy); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.95rem; border: 3px solid var(--light-bg);
+        }
+        .step h3 { font-size: 1.3rem; color: var(--deep-navy); margin-bottom: 12px; font-weight: 700; }
+        .step p { font-size: 1rem; color: #475569; }
+
+        /* Features */
+        .features-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px; margin-top: 20px;
+        }
+        .feature-card {
+            background: white; border-radius: 20px; padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid var(--border-color);
+            transition: 0.3s;
+        }
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: rgba(37, 99, 235, 0.3); }
+        .feature-icon {
+            width: 65px; height: 65px; border-radius: 14px; background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-blue); display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; margin-bottom: 25px;
+        }
+        .feature-card h3 { font-size: 1.4rem; color: var(--deep-navy); margin-bottom: 12px; font-weight: 700; }
+        .feature-card p { color: #64748B; font-size: 1.05rem; }
+
+        /* About / Impact */
+        .about-section {
+            background: white; border-radius: 24px; padding: 80px;
+            margin: 0 auto; box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            display: flex; gap: 80px; align-items: center; border: 1px solid var(--border-color);
+        }
+        .about-text { flex: 1; }
+        .about-text h2 { font-size: 2.5rem; color: var(--deep-navy); margin-bottom: 20px; font-weight: 800; }
+        .about-text p { font-size: 1.15rem; color: #475569; margin-bottom: 20px; line-height: 1.7; }
+        .about-visual { flex: 1; text-align: center; }
+        .about-logo { max-width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1)); }
+
+        /* CTA Section */
+        .cta-section {
+            background: #0B1121;
+            color: #FFFFFF;
+            text-align: center;
+            padding: 120px 5%;
+            background-image: radial-gradient(circle at center, rgba(37, 99, 235, 0.25) 0%, transparent 60%);
+        }
+        .cta-section h2 { font-size: 4rem; font-weight: 800; margin-bottom: 20px; line-height: 1.1; letter-spacing: -1px; }
+        .cta-section p { font-size: 1.3rem; color: #CBD5E1; margin-bottom: 50px; max-width: 600px; margin-inline: auto; }
+
+        /* Footer */
+        .footer {
+            background: #050B14; color: #94A3B8; padding: 80px 5% 40px;
+        }
+        .footer-content {
+            max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 60px; margin-bottom: 40px;
+        }
+        .footer-brand-badge { background: #FFFFFF; border-radius: 8px; padding: 4px 10px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .footer-brand img { height: 38px; width: auto; object-fit: contain; display: block; }
+        .footer-brand h4 { color: white; font-size: 1.2rem; margin-bottom: 12px; }
+        .footer-brand p { max-width: 350px; font-size: 0.95rem; line-height: 1.6; }
+        .footer-links { display: flex; gap: 100px; }
+        .link-group h5 { color: white; font-size: 1.2rem; margin-bottom: 25px; }
+        .link-group ul { list-style: none; }
+        .link-group ul li { margin-bottom: 15px; }
+        .link-group ul li a { color: #94A3B8; transition: 0.2s; }
+        .link-group ul li a:hover { color: white; }
+        .footer-bottom { text-align: center; font-size: 0.9rem; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .hero-title { font-size: 3rem; }
+            .about-section { padding: 60px 40px; gap: 40px; }
+        }
+        @media (max-width: 1024px) {
+            .hero-container, .about-section { flex-direction: column; text-align: center; }
+            .hero-highlights { justify-content: center; flex-wrap: wrap; }
+            .workflow { flex-direction: column; gap: 50px; }
+            .workflow::before { display: none; }
+            .step-num { left: 50%; transform: translateX(-50%); top: -15px; }
+            .footer-content { flex-direction: column; gap: 50px; }
+            .footer-links { flex-wrap: wrap; gap: 50px; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero { padding-top: 120px; }
+            .hero-title { font-size: 2.5rem; }
+            .cta-section h2 { font-size: 2.8rem; }
+            .section-title { font-size: 2.2rem; }
+        }
+
+        /* Dark Theme Overrides for Landing Page */
+        [data-theme="dark"] {
+            --light-bg: #070B14;
+            --charcoal: #E2E8F0;
+            --border-color: #1E293B;
+        }
+        [data-theme="dark"] body {
+            background-color: #070B14;
+            color: #E2E8F0;
+        }
+        [data-theme="dark"] .navbar {
+            background: rgba(7, 11, 20, 0.95);
+            border-bottom-color: #1E293B;
+        }
+        [data-theme="dark"] .nav-links { color: #E2E8F0; }
+        [data-theme="dark"] .section-title { color: #FFFFFF; }
+        [data-theme="dark"] .section-subtitle { color: #94A3B8; }
+        [data-theme="dark"] .step h3 { color: #FFFFFF; }
+        [data-theme="dark"] .step p { color: #94A3B8; }
+        [data-theme="dark"] .step-icon { background: #0E1626; border-color: #1E293B; }
+        [data-theme="dark"] .step-num { border-color: #070B14; }
+        [data-theme="dark"] .feature-card { background: #0E1626; border-color: #1E293B; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        [data-theme="dark"] .feature-card h3 { color: #FFFFFF; }
+        [data-theme="dark"] .feature-card p { color: #94A3B8; }
+        [data-theme="dark"] .about-section { background: #0E1626; border-color: #1E293B; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        [data-theme="dark"] .about-text h2 { color: #FFFFFF; }
+        [data-theme="dark"] .about-text p { color: #94A3B8; }
+        [data-theme="dark"] .about-logo-badge { background: #FFFFFF; border-radius: 16px; padding: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); display: inline-block; }
+        </style>
+
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="javascript:void(0)" class="nav-logo" style="display:flex; align-items:center;">
+            <div style="background: #FFFFFF; border-radius: 8px; padding: 3px 8px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.12);">
+                <img src="{{ url_for('static', filename='images/safedrive-logo.png') }}" alt="SafeDrive Official Logo" style="height: 34px; width: auto; object-fit: contain; display: block;">
+            </div>
+        </a>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+        </div>
+        <div class="nav-auth">
+            <div class="theme-pill" id="theme-toggle-btn" style="display:inline-flex; background:var(--border-color); border-radius:20px; padding:3px; cursor:pointer; font-size:0.75rem; font-weight:600; align-items:center; border:1px solid rgba(0,0,0,0.1); user-select:none;">
+    <span class="theme-icon light-icon" style="padding:5px 10px; border-radius:15px; transition:all 0.2s; color:var(--text-muted);">☀ LIGHT</span>
+    <span class="theme-icon dark-icon" style="padding:5px 10px; border-radius:15px; transition:all 0.2s; color:var(--text-muted);">◐ DARK</span>
+</div>
+            <a href="{{ url_for('login') }}" class="btn-outline">Login</a>
+            <a href="{{ url_for('signup') }}" class="btn-solid">Sign Up</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-container">
+            <div class="hero-text">
+                <div class="hero-tagline">STAY ALERT. STAY SAFE. DRIVE SAFE.</div>
+                <h1 class="hero-title">AI-POWERED DRIVER SAFETY</h1>
+                <h3 class="hero-subtitle">Driver Drowsiness Detection and Emergency Alertness System</h3>
+                <p class="hero-desc">SafeDrive uses AI and computer vision to monitor driver alertness in real time, detect signs of drowsiness, trigger immediate alerts, and notify emergency contacts when necessary.</p>
+
+                <a href="{{ url_for('login') }}" class="btn-large">GET STARTED</a>
+
+                <div class="hero-highlights">
+                    <div class="highlight-item">
+                        <div class="highlight-icon">👁️</div>
+                        <div class="highlight-text">
+                            <h4>Real-Time Monitoring</h4>
+                            <p>AI + Computer Vision</p>
+                        </div>
+                    </div>
+                    <div class="highlight-item">
+                        <div class="highlight-icon">⚠️</div>
+                        <div class="highlight-text">
+                            <h4>Driver Safety</h4>
+                            <p>Alert-Based Response</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-media">
+                <div class="video-wrapper">
+                    <video class="hero-video" controls controlsList="nodownload" oncontextmenu="return false;" playsinline preload="metadata" poster="{{ url_for('static', filename='images/safedrive-logo.png') }}">
+                        <source src="{{ url_for('static', filename='safedrive-demo.mp4') }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section" id="how-it-works">
+        <div class="section-header">
+            <div class="section-label">HOW IT WORKS</div>
+            <h2 class="section-title">From Detection to Safety</h2>
+            <p class="section-subtitle">SafeDrive continuously monitors driver alertness and follows a structured response workflow when drowsiness is detected.</p>
+        </div>
+
+        <div class="workflow">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-icon">🚗</div>
+                <h3>Driving Normally</h3>
+                <p>System continuously monitors the driver's face and eye movements.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-icon">😴</div>
+                <h3>Drowsiness Detected</h3>
+                <p>AI detects signs of drowsiness in real time using computer vision.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-icon">🚨</div>
+                <h3>Loud Alert Triggered</h3>
+                <p>An immediate audio warning alerts the driver to stay awake.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-icon">✉️</div>
+                <h3>Emergency Email Sent</h3>
+                <p>If the warning condition continues, the system sends an emergency notification with available location information.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features Section -->
+    <section class="section" id="features" style="background: white; max-width: 100%; padding-top: 80px; padding-bottom: 100px;">
+        <div style="max-width: 1400px; margin: 0 auto;">
+            <div class="section-header">
+                <div class="section-label">KEY FEATURES</div>
+                <h2 class="section-title">Engineered for Safety</h2>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">👁️‍🗨️</div>
+                    <h3>REAL-TIME MONITORING</h3>
+                    <p>AI + Computer Vision</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>DROWSINESS DETECTION</h3>
+                    <p>Eye/face monitoring</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔊</div>
+                    <h3>LOUD ALERT</h3>
+                    <p>Immediate driver warning</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📬</div>
+                    <h3>EMERGENCY NOTIFICATION</h3>
+                    <p>Emergency email workflow</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h3>GPS LOCATION</h3>
+                    <p>Location sharing when available</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>SAFETY HISTORY</h3>
+                    <p>Recorded monitoring events</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section" id="about">
+        <div class="about-section">
+            <div class="about-text">
+                <div class="section-label" style="text-align: left;">ABOUT SAFEDRIVE</div>
+                <h2>A Complete Safety System</h2>
+                <p>SafeDrive is an AI-powered driver safety system designed to monitor driver alertness in real time and respond when signs of drowsiness are detected.</p>
+                <p>By combining computer vision, real-time monitoring, alert mechanisms, location support, and emergency notification workflows, SafeDrive is designed to support safer driving and faster response during critical situations.</p>
+            </div>
+            <div class="about-visual">
+                <div class="about-logo-badge" style="background: #FFFFFF; border-radius: 16px; padding: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.12); display: inline-block;">
+                    <img src="{{ url_for('static', filename='images/safedrive-logo.png') }}" alt="SafeDrive Workflow" class="about-logo" style="max-width: 100%; height: auto; object-fit: contain; display: block;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <h2>STAY ALERT.<br>STAY SAFE.<br>DRIVE SAFE.</h2>
+        <p>Start using SafeDrive to monitor driver alertness and explore the safety system.</p>
+        <a href="{{ url_for('login') }}" class="btn-large">GET STARTED</a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-brand-badge">
+                    <img src="{{ url_for('static', filename='images/safedrive-logo.png') }}" alt="SafeDrive Logo">
+                </div>
+                <h4>AI-POWERED DRIVER SAFETY</h4>
+                <p>Driver Drowsiness Detection and Emergency Alertness System</p>
+            </div>
+            <div class="footer-links">
+                <div class="link-group">
+                    <h5>Navigation</h5>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#about">About</a></li>
+                    </ul>
+                </div>
+                <div class="link-group">
+                    <h5>Account</h5>
+                    <ul>
+                        <li><a href="{{ url_for('login') }}">Login</a></li>
+                        <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 SafeDrive - AI-Powered Driver Safety. All rights reserved.
+        </div>
+    </footer>
+
+
+<script>
+// Global protection against downloading images and videos
+document.addEventListener('contextmenu', function(e) {
+    if (e.target.nodeName === 'IMG' || e.target.nodeName === 'VIDEO') {
+        e.preventDefault();
+    }
+});
+document.addEventListener('dragstart', function(e) {
+    if (e.target.nodeName === 'IMG') {
+        e.preventDefault();
+    }
+});
+</script>
+</body>
+
+</html>
