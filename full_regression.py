@@ -912,9 +912,9 @@ class SafeDriveComprehensiveValidationSuite(unittest.TestCase):
 
         # 2. Confirm remote / unapproved MongoDB hosts are strictly rejected
         for forbidden_uri in [
-            "mongodb+srv://admin:secret@cluster0.abc.mongodb.net/",
-            "mongodb://remote-db.production.com:27017/",
-            "mongodb://192.168.1.100:27017/"
+            "mongodb+srv://cluster0.example.invalid/",
+            "mongodb://remote-db.example.invalid:27017/",
+            "mongodb://192.0.2.1:27017/"
         ]:
             p = urlparse(forbidden_uri)
             host = (p.hostname or "").lower()
