@@ -32,11 +32,49 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', os.urandom(24))
+def validate_and_load_secret_key():
+    raw_key = os.getenv('SECRET_KEY', '').strip()
+    is_prod = (os.getenv('FLASK_ENV') == 'production')
+
+    known_placeholders = {
+        'generate_a_secure_random_key_here',
+        'your_secure_random_secret_key_here',
+        'your_secret_key',
+        'change_me',
+        'secret',
+        'default',
+        'password'
+    }
+
+    if is_prod:
+        if not raw_key:
+            raise RuntimeError('SECRET_KEY environment variable is mandatory in production')
+        if raw_key.lower() in known_placeholders:
+            raise RuntimeError('Production SECRET_KEY cannot use an insecure placeholder value')
+        if len(raw_key) < 32:
+            raise RuntimeError('Production SECRET_KEY must be at least 32 characters in length')
+        return raw_key
+
+    if raw_key:
+        return raw_key
+    # Development default: generate secure random key in memory per startup
+    return secrets.token_hex(32)
+
+app.secret_key = validate_and_load_secret_key()
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# Production HTTPS uses SESSION_COOKIE_SECURE=True by default.
+# Local development uses SESSION_COOKIE_SECURE=False unless explicitly requested.
+if os.getenv('FLASK_ENV') == 'production':
+    app.config['SESSION_COOKIE_SECURE'] = True
+else:
+    app.config['SESSION_COOKIE_SECURE'] = (os.getenv('PREFER_HTTPS', 'false').lower() in ('true', '1'))
 
 # MongoDB setup
-client = pymongo.MongoClient("mongodb://localhost:27017/")
-db = client["drowsiness_db"]
+mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+mongo_db_name = os.getenv("MONGO_DB_NAME", "drowsiness_db")
+client = pymongo.MongoClient(mongo_uri)
+db = client[mongo_db_name]
 logs_collection = db["logs"]
 users_collection = db["users"]
 contacts_collection = db["emergency_contacts"]
@@ -65,8 +103,7 @@ if not users_collection.find_one({'username': 'test'}):
 SOUNDS_DIR = 'static/sounds'
 os.makedirs(SOUNDS_DIR, exist_ok=True)
 
-# Receiver email for emergency alerts
-RECEIVER_EMAIL = "c.arjun6623@gmail.com,99220040825@klu.ac.in"  # Updated with provided emails
+# Emergency email dispatch is strictly user-configured via Emergency Contacts
 
 # Initialize camera
 cap = cv2.VideoCapture(0)
@@ -134,7 +171,7 @@ def eye_aspect_ratio(landmarks, eye_indices, frame_width, frame_height):
 LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380]
 
-def generate_frames():
+def generate_frames(driver_username=None):
     global beep_playing, alert_playing, beep_end_time, alert_end_time
     global closed_start_time, open_start_time, warning_count, last_eyes_open_time, event_registered
     global cap
@@ -243,8 +280,15 @@ def generate_frames():
                         def email_thread_func(loc_data):
                             try:
                                 print("Starting background email thread...")
-                                contact = contacts_collection.find_one({'type': 'trusted'})
-                                recipient = contact['email'] if contact else RECEIVER_EMAIL
+                                current_driver = driver_username
+                                if not current_driver:
+                                    print('[SafeDrive] No authenticated driver session provided to stream. Email dispatch skipped.')
+                                    return
+                                contact = contacts_collection.find_one({'username': current_driver, 'type': 'trusted'})
+                                if not contact or not contact.get('email'):
+                                    print(f"[SafeDrive] No trusted emergency contact configured for driver '{current_driver}'. Email dispatch skipped.")
+                                    return
+                                recipient = contact['email']
                                 send_location_email(recipient, loc_data)
                                 log_event("email", "Emergency email sent")
                                 print("Background email sent successfully")
@@ -312,23 +356,27 @@ def control_monitoring():
 
 @app.route('/api/contact', methods=['GET', 'POST', 'DELETE'])
 def handle_contact():
+    current_username = session.get('user')
+    if not current_username:
+        return jsonify({'error': 'Authentication required'}), 401
+
     if request.method == 'DELETE':
-        contacts_collection.delete_one({'type': 'trusted'})
+        contacts_collection.delete_many({'username': current_username, 'type': 'trusted'})
         return jsonify({'status': 'deleted'})
     if request.method == 'POST':
         data = request.json or {}
         if data.get('action') == 'delete':
-            contacts_collection.delete_one({'type': 'trusted'})
+            contacts_collection.delete_many({'username': current_username, 'type': 'trusted'})
             return jsonify({'status': 'deleted'})
         email = (data.get('email') or '').strip()
         phone = (data.get('phone') or '').strip()
         contacts_collection.update_one(
-            {'type': 'trusted'},
-            {'$set': {'email': email, 'phone': phone}},
+            {'username': current_username, 'type': 'trusted'},
+            {'$set': {'email': email, 'phone': phone, 'username': current_username, 'type': 'trusted'}},
             upsert=True
         )
         return jsonify({'status': 'success', 'email': email, 'phone': phone})
-    contact = contacts_collection.find_one({'type': 'trusted'})
+    contact = contacts_collection.find_one({'username': current_username, 'type': 'trusted'})
     if contact and (contact.get('email') or contact.get('phone')):
         return jsonify({
             'exists': True,
@@ -588,12 +636,13 @@ def require_login():
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
+    session.clear()
     return redirect(url_for('landing'))
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    driver = session.get('user')
+    return Response(generate_frames(driver_username=driver), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/get_ip_location')
 def get_ip_location():
@@ -695,7 +744,7 @@ def validate_email_domain_dns(domain):
 
 def send_otp_email(recipient_email, otp_code, purpose="Password Reset"):
     load_dotenv(override=True)
-    sender_email = os.getenv("SENDER_EMAIL", "c.arjun6623@gmail.com")
+    sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD", "")
     if sender_password:
         sender_password = sender_password.strip().replace(" ", "")
@@ -1026,7 +1075,7 @@ def api_generate_otp():
     import threading
     threading.Thread(target=send_otp_email, args=(user['email'], otp_code), daemon=True).start()
     # Server-side audit log for operational testing and audit
-    print(f"[SafeDrive OTP Audit] Password reset OTP generated for {user.get('username')} ({user.get('email')}): {otp_code} (Valid for 5 min)")
+    print(f"[SafeDrive OTP Audit] Password reset OTP generated for {user.get('username')} ({user.get('email')}) (Valid for 5 min)")
 
     return jsonify({
         'success': True,

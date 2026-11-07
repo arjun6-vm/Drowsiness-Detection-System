@@ -101,7 +101,7 @@ This is an automated emergency alert from the Drowsiness Detection System.
         load_dotenv(override=True)
 
         # Email credentials (configured for emergency alerts)
-        sender_email = os.getenv("SENDER_EMAIL", "c.arjun6623@gmail.com")
+        sender_email = os.getenv("SENDER_EMAIL")
         sender_password = os.getenv("SENDER_PASSWORD")
         if sender_password:
             sender_password = sender_password.replace(" ", "")
