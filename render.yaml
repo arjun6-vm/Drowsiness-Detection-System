@@ -3,5 +3,5 @@ services:
     name: safedrive-ai
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: python run_server.py
     plan: free
