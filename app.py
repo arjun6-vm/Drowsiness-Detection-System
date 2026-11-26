@@ -113,12 +113,16 @@ os.makedirs(SOUNDS_DIR, exist_ok=True)
 
 # Emergency email dispatch is strictly user-configured via Emergency Contacts
 
-# Initialize camera
-cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    cap = cv2.VideoCapture(1)  # Try secondary camera
-if not cap.isOpened():
-    raise RuntimeError("Cannot open camera")
+# Initialize camera (Graceful startup: hardware camera is optional on cloud environments)
+cap = None
+try:
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        cap = cv2.VideoCapture(1)
+    if not cap.isOpened():
+        cap = None
+except Exception:
+    cap = None
 
 # MediaPipe face mesh setup
 mp_face_mesh = mp.solutions.face_mesh
@@ -229,9 +233,20 @@ def generate_frames(driver_username=None):
             continue
 
         if cap is None or not cap.isOpened():
-            cap = cv2.VideoCapture(0)
-            if not cap.isOpened():
-                cap = cv2.VideoCapture(1)
+            try:
+                cap = cv2.VideoCapture(0)
+                if not cap.isOpened():
+                    cap = cv2.VideoCapture(1)
+            except Exception:
+                cap = None
+        if cap is None or not cap.isOpened():
+            import numpy as np
+            frame = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.putText(frame, "CAMERA CONNECTING / BROWSER ACTIVE", (70, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+            _, buffer = cv2.imencode(".jpg", frame)
+            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n")
+            time.sleep(1.0)
+            continue
 
         success, frame = cap.read()
         if not success:
