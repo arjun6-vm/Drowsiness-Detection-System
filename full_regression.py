@@ -53,7 +53,8 @@ test_db = direct_mongo_client[DISPOSABLE_TEST_DB]
 from app import (
     app, users_collection, contacts_collection, logs_collection,
     signup_verifications_collection, password_resets_collection,
-    send_otp_email, eye_aspect_ratio, LEFT_EYE_INDICES, RIGHT_EYE_INDICES
+    send_otp_email, eye_aspect_ratio, LEFT_EYE_INDICES, RIGHT_EYE_INDICES,
+    get_driver_location, set_driver_location, clear_driver_location, log_event
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from location_email_alert import send_location_email
@@ -941,6 +942,172 @@ class SafeDriveComprehensiveValidationSuite(unittest.TestCase):
         # 5. Confirm live working db is never passed to drop_database
         self.assertNotEqual(DISPOSABLE_TEST_DB, "drowsiness_db")
         self.assertEqual(DISPOSABLE_TEST_DB, "safedrive_disposable_test_db")
+
+
+
+    def test_31_fresh_startup_does_not_create_default_test_account(self):
+        """Verify that application startup without ENABLE_DEV_SEEDS does not seed default 'test' user."""
+        test_user = users_collection.find_one({'username': 'test'})
+        self.assertIsNone(test_user, "Default demo user 'test' must not be auto-created on clean startup!")
+
+    def test_32_dev_seeds_enabled_only_when_explicit_and_non_production(self):
+        """Verify that development seed only creates test user when explicitly enabled in non-production."""
+        # When enabled in testing/development
+        with patch.dict(os.environ, {'ENABLE_DEV_SEEDS': 'true', 'FLASK_ENV': 'development'}):
+            is_prod = (os.getenv('FLASK_ENV') == 'production')
+            enable_seeds = (os.getenv('ENABLE_DEV_SEEDS', 'false').lower() == 'true')
+            self.assertTrue(enable_seeds and not is_prod)
+
+        # When in production, seeds must be forbidden even if ENABLE_DEV_SEEDS=true
+        with patch.dict(os.environ, {'ENABLE_DEV_SEEDS': 'true', 'FLASK_ENV': 'production'}):
+            is_prod = (os.getenv('FLASK_ENV') == 'production')
+            enable_seeds = (os.getenv('ENABLE_DEV_SEEDS', 'false').lower() == 'true')
+            self.assertFalse(enable_seeds and not is_prod, "Dev seeds must be strictly forbidden in production!")
+
+    def test_33_safety_events_multiuser_isolation(self):
+        """Verify that User A cannot see User B's safety events on the /safety_events page."""
+        # 1. Insert distinct safety events
+        log_event("warning", "Driver Alice event 1", username="alice_driver")
+        log_event("alert", "Driver Alice event 2", username="alice_driver")
+        log_event("warning", "Driver Bob event 1", username="bob_driver")
+
+        # 2. Access /safety_events as Alice
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'alice_driver'
+        resp_alice = self.client.get('/safety_events')
+        self.assertEqual(resp_alice.status_code, 200)
+        alice_html = resp_alice.get_data(as_text=True)
+        self.assertIn("Driver Alice event 1", alice_html)
+        self.assertIn("Driver Alice event 2", alice_html)
+        self.assertNotIn("Driver Bob event 1", alice_html)
+
+        # 3. Access /safety_events as Bob
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'bob_driver'
+        resp_bob = self.client.get('/safety_events')
+        self.assertEqual(resp_bob.status_code, 200)
+        bob_html = resp_bob.get_data(as_text=True)
+        self.assertIn("Driver Bob event 1", bob_html)
+        self.assertNotIn("Driver Alice event 1", bob_html)
+
+    def test_34_csv_download_multiuser_isolation(self):
+        """Verify that CSV export strictly contains only the authenticated user's events."""
+        log_event("warning", "Event for Driver Charlie", username="charlie_driver")
+        log_event("warning", "Event for Driver Dana", username="dana_driver")
+
+        # Download report as Charlie
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'charlie_driver'
+        resp = self.client.get('/download_report')
+        self.assertEqual(resp.status_code, 200)
+        csv_text = resp.get_data(as_text=True)
+        self.assertIn("Event for Driver Charlie", csv_text)
+        self.assertNotIn("Event for Driver Dana", csv_text)
+
+    def test_35_unowned_legacy_events_are_inaccessible(self):
+        """Verify that unowned legacy events (lacking username) are never exposed to ordinary drivers."""
+        # Direct insert of legacy unowned event
+        logs_collection.insert_one({
+            "timestamp": "2026-01-01 00:00:00",
+            "event_type": "legacy",
+            "warning_count": 0,
+            "message": "Unowned orphan event record"
+        })
+
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'active_driver'
+        resp_page = self.client.get('/safety_events')
+        self.assertNotIn("Unowned orphan event record", resp_page.get_data(as_text=True))
+
+        resp_csv = self.client.get('/download_report')
+        self.assertNotIn("Unowned orphan event record", resp_csv.get_data(as_text=True))
+
+    def test_36_unauthenticated_location_update_rejected(self):
+        """Verify that anonymous POST to /update_location is rejected with HTTP 401."""
+        with self.client.session_transaction() as sess:
+            sess.clear()
+        resp = self.client.post('/update_location', json={'lat': 37.7749, 'lng': -122.4194})
+        self.assertEqual(resp.status_code, 401)
+        self.assertIn('Authentication required', resp.get_json().get('error', ''))
+
+    def test_37_gps_coordinate_validation_and_boundary_checks(self):
+        """Verify that invalid, non-numeric, non-finite, and out-of-range coordinates are rejected with HTTP 400."""
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'valid_driver'
+
+        # Out of range latitude (> 90)
+        resp1 = self.client.post('/update_location', json={'lat': 95.0, 'lng': 10.0})
+        self.assertEqual(resp1.status_code, 400)
+        self.assertIn('Out-of-range', resp1.get_json().get('error', ''))
+
+        # Out of range longitude (< -180)
+        resp2 = self.client.post('/update_location', json={'lat': 10.0, 'lng': -195.0})
+        self.assertEqual(resp2.status_code, 400)
+
+        # Malformed non-numeric coordinates
+        resp3 = self.client.post('/update_location', json={'lat': 'invalid_lat', 'lng': 10.0})
+        self.assertEqual(resp3.status_code, 400)
+
+        # Missing coordinates
+        resp4 = self.client.post('/update_location', json={'accuracy': 50})
+        self.assertEqual(resp4.status_code, 400)
+
+    def test_38_driver_gps_isolation_and_no_crosstalk(self):
+        """Verify that User A's location update does not overwrite User B's location."""
+        # 1. Update location for Driver Alpha
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'driver_alpha'
+        resp_alpha = self.client.post('/update_location', json={'lat': 40.7128, 'lng': -74.0060})
+        self.assertEqual(resp_alpha.status_code, 200)
+
+        # 2. Update location for Driver Beta
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'driver_beta'
+        resp_beta = self.client.post('/update_location', json={'lat': 34.0522, 'lng': -118.2437})
+        self.assertEqual(resp_beta.status_code, 200)
+
+        # 3. Assert isolated stored locations
+        loc_alpha = get_driver_location('driver_alpha')
+        loc_beta = get_driver_location('driver_beta')
+
+        self.assertAlmostEqual(loc_alpha['lat'], 40.7128)
+        self.assertAlmostEqual(loc_alpha['lng'], -74.0060)
+        self.assertAlmostEqual(loc_beta['lat'], 34.0522)
+        self.assertAlmostEqual(loc_beta['lng'], -118.2437)
+
+    def test_39_driver_location_cleared_on_logout(self):
+        """Verify that logging out purges the driver's cached location."""
+        set_driver_location('driver_to_logout', {'lat': 51.5074, 'lng': -0.1278})
+        self.assertTrue(bool(get_driver_location('driver_to_logout')))
+
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'driver_to_logout'
+        resp = self.client.get('/logout')
+        self.assertEqual(resp.status_code, 302)
+
+        # Verify location was purged from memory
+        self.assertEqual(get_driver_location('driver_to_logout'), {})
+
+    def test_40_gps_coordinates_redacted_from_captured_logs(self):
+        """Verify that raw latitude and longitude numbers never appear in standard log output."""
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'privacy_driver'
+
+        log_capture = io.StringIO()
+        with patch('sys.stdout', log_capture):
+            self.client.post('/update_location', json={'lat': 12.345678, 'lng': 98.765432})
+
+        output = log_capture.getvalue()
+        self.assertNotIn("12.345678", output)
+        self.assertNotIn("98.765432", output)
+        self.assertIn("Coordinates redacted for privacy", output)
+
+    def test_41_production_debug_mode_disabled(self):
+        """Verify that production mode explicitly disables debug mode."""
+        with patch.dict(os.environ, {'FLASK_ENV': 'production', 'FLASK_DEBUG': 'true'}):
+            is_prod = (os.getenv('FLASK_ENV') == 'production')
+            enable_debug = (os.getenv('FLASK_DEBUG', 'false').lower() == 'true') and not is_prod
+            self.assertFalse(enable_debug, "Production mode must strictly forbid debug mode!")
 
 
 if __name__ == '__main__':

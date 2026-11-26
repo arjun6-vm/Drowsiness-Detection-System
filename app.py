@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, send_file, request, redirect, url_for, session, jsonify
+from flask import Flask, has_request_context, render_template, Response, send_file, request, redirect, url_for, session, jsonify
 import cv2
 import mediapipe as mp
 import winsound
@@ -27,9 +27,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from bson import ObjectId
 
+import threading
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 app = Flask(__name__)
 def validate_and_load_secret_key():
@@ -90,14 +91,18 @@ try:
 except Exception as _e_idx:
     print(f"[SafeDrive DB] Index initialization note: {_e_idx}")
 
-# Seed initial test user if not exists
-if not users_collection.find_one({'username': 'test'}):
-    users_collection.insert_one({
-        'username': 'test',
-        'password_hash': generate_password_hash('test'),
-        'favorite_car': 'car',
-        'favorite_person': 'person'
-    })
+# Optional development seed (strictly disabled by default and forbidden in production)
+is_production_mode = (os.getenv('FLASK_ENV') == 'production')
+enable_dev_seeds = (os.getenv('ENABLE_DEV_SEEDS', 'false').lower() == 'true')
+if enable_dev_seeds and not is_production_mode:
+    if not users_collection.find_one({'username': 'test'}):
+        users_collection.insert_one({
+            'username': 'test',
+            'password_hash': generate_password_hash('test'),
+            'favorite_car': 'car',
+            'favorite_person': 'person'
+        })
+        print("[SafeDrive Seed] Development seed account 'test' initialized (non-production only).")
 
 # Configuration
 SOUNDS_DIR = 'static/sounds'
@@ -134,15 +139,43 @@ EYES_CLOSED_THRESHOLD = 6
 EYES_OPEN_RESET_THRESHOLD = 3
 last_eyes_open_time = time.time()
 event_registered = False
-current_location = {}
+driver_locations = {}
+driver_locations_lock = threading.Lock()
 location_history = []
 
+def get_driver_location(driver_username):
+    if not driver_username:
+        return {}
+    with driver_locations_lock:
+        loc = driver_locations.get(driver_username, {})
+        return loc.copy() if loc else {}
 
+def set_driver_location(driver_username, location_data):
+    if not driver_username:
+        return
+    with driver_locations_lock:
+        driver_locations[driver_username] = location_data.copy()
 
-def log_event(event_type, message):
+def clear_driver_location(driver_username):
+    if not driver_username:
+        return
+    with driver_locations_lock:
+        driver_locations.pop(driver_username, None)
+
+def log_event(event_type, message, username=None):
+    # Resolve owner username explicitly or from active session
+    owner = username
+    if not owner:
+        try:
+            if has_request_context():
+                owner = session.get('user')
+        except Exception:
+            owner = None
+
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
     log_data = {
         "timestamp": timestamp,
+        "username": owner,
         "event_type": event_type,
         "warning_count": warning_count,
         "message": message
@@ -151,10 +184,13 @@ def log_event(event_type, message):
         logs_collection.insert_one(log_data)
     except Exception as e:
         print(f"Failed to log to MongoDB: {e}")
-    # Backup to CSV
-    with open('drowsiness_logs.csv', 'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([timestamp, event_type, warning_count, message])
+    # User-scoped backup to CSV
+    try:
+        with open('drowsiness_logs.csv', 'a', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow([timestamp, owner or 'anonymous', event_type, warning_count, message])
+    except Exception as _e_csv:
+        pass
 
 def eye_aspect_ratio(landmarks, eye_indices, frame_width, frame_height):
     import math
@@ -251,7 +287,7 @@ def generate_frames(driver_username=None):
                 if open_start_time is None:
                     open_start_time = current_time
                 elif (current_time - open_start_time) > EYES_OPEN_RESET_THRESHOLD:
-                    log_event("reset", "Eyes opened, warnings reset")
+                    log_event("reset", "Eyes opened, warnings reset", username=driver_username)
                     warning_count = 0
                     open_start_time = None
             else:
@@ -264,7 +300,7 @@ def generate_frames(driver_username=None):
             closed_duration = current_time - closed_start_time
             if closed_duration >= EYES_CLOSED_THRESHOLD * (warning_count + 1):
                 warning_count += 1
-                log_event("warning", f"Eyes closed for {closed_duration:.1f}s")
+                log_event("warning", f"Eyes closed for {closed_duration:.1f}s", username=driver_username)
                 event_registered = True
                 if warning_count < 4:
                     winsound.Beep(2000, 3500)
@@ -274,35 +310,34 @@ def generate_frames(driver_username=None):
                     winsound.Beep(3500, 5000)
                     alert_playing = True
                     alert_end_time = current_time + 5.0
-                    log_event("alert", "Final alert triggered")
+                    log_event("alert", "Final alert triggered", username=driver_username)
                     try:
-                        import threading
                         def email_thread_func(loc_data):
                             try:
-                                print("Starting background email thread...")
+                                print("[SafeDrive Alert] Starting background email thread...")
                                 current_driver = driver_username
                                 if not current_driver:
-                                    print('[SafeDrive] No authenticated driver session provided to stream. Email dispatch skipped.')
+                                    print('[SafeDrive Alert] No authenticated driver session provided to stream. Email dispatch skipped.')
                                     return
                                 contact = contacts_collection.find_one({'username': current_driver, 'type': 'trusted'})
                                 if not contact or not contact.get('email'):
-                                    print(f"[SafeDrive] No trusted emergency contact configured for driver '{current_driver}'. Email dispatch skipped.")
+                                    print(f"[SafeDrive Alert] No trusted emergency contact configured for driver '{current_driver}'. Email dispatch skipped.")
                                     return
                                 recipient = contact['email']
                                 send_location_email(recipient, loc_data)
-                                log_event("email", "Emergency email sent")
-                                print("Background email sent successfully")
+                                log_event("email", "Emergency email sent", username=current_driver)
+                                print("[SafeDrive Alert] Background email dispatched successfully.")
                             except Exception as e:
-                                print(f"Background email failed: {e}")
-                                log_event("error", f"Failed to send email: {str(e)}")
+                                print(f"[SafeDrive Alert] Background email failed: {e}")
+                                log_event("error", f"Failed to send email: {str(e)}", username=driver_username)
 
-                        loc_copy = current_location.copy() if current_location else {}
+                        loc_copy = get_driver_location(driver_username)
                         email_thread = threading.Thread(target=email_thread_func, args=(loc_copy,))
                         email_thread.daemon = True
                         email_thread.start()
-                        print("Email thread started")
+                        print("[SafeDrive Alert] Emergency dispatch thread started.")
                     except Exception as e:
-                        log_event("error", f"Failed to start email thread: {str(e)}")
+                        log_event("error", f"Failed to start email thread: {str(e)}", username=driver_username)
 
         _, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
@@ -332,26 +367,27 @@ def login():
 @app.route('/api/control', methods=['POST'])
 def control_monitoring():
     global monitoring_active, monitoring_paused, closed_start_time, open_start_time, warning_count
-    action = request.json.get('action')
+    current_driver = session.get('user')
+    action = request.json.get('action') if request.json else None
     if action == 'pause':
         monitoring_paused = True
-        log_event("PAUSED", "Monitoring paused by user")
+        log_event("PAUSED", "Monitoring paused by user", username=current_driver)
     elif action == 'resume':
         monitoring_paused = False
         closed_start_time = None
         open_start_time = None
-        log_event("RESUMED", "Monitoring resumed by user")
+        log_event("RESUMED", "Monitoring resumed by user", username=current_driver)
     elif action == 'stop':
         monitoring_active = False
         monitoring_paused = False
-        log_event("STOPPED", "Monitoring stopped by user")
+        log_event("STOPPED", "Monitoring stopped by user", username=current_driver)
     elif action == 'start':
         monitoring_active = True
         monitoring_paused = False
         closed_start_time = None
         open_start_time = None
         warning_count = 0
-        log_event("STARTED", "Monitoring started by user")
+        log_event("STARTED", "Monitoring started by user", username=current_driver)
     return jsonify({'status': action})
 
 @app.route('/api/contact', methods=['GET', 'POST', 'DELETE'])
@@ -449,8 +485,10 @@ def get_event_warning_level(event):
 def safety_events():
     if 'user' not in session:
         return redirect(url_for('login'))
+    current_driver = session['user']
     try:
-        events = list(logs_collection.find().sort('_id', -1).limit(50))
+        # Strictly query only events owned by the authenticated driver
+        events = list(logs_collection.find({'username': current_driver}).sort('_id', -1).limit(50))
         for ev in events:
             ev['display_warning_level'] = get_event_warning_level(ev)
     except Exception:
@@ -605,7 +643,9 @@ from flask import Response
 def download_report():
     if 'user' not in session:
         return redirect(url_for('login'))
-    events = list(logs_collection.find().sort("timestamp", -1))
+    current_driver = session['user']
+    # Strictly export only events owned by the authenticated driver
+    events = list(logs_collection.find({'username': current_driver}).sort("timestamp", -1))
 
     si = StringIO()
     cw = csv.writer(si)
@@ -632,10 +672,16 @@ def require_login():
         return
     allowed_routes = ['login', 'signup', 'forgot_password', 'api_generate_otp', 'api_verify_otp', 'api_reset_password', 'api_signup_send_otp', 'api_signup_verify_otp', 'static', 'landing', 'index']
     if request.endpoint not in allowed_routes and 'user' not in session:
+        # Return structured 401 for API / JSON endpoints
+        if request.path.startswith('/api/') or request.path in ['/update_location']:
+            return jsonify({'error': 'Authentication required'}), 401
         return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
+    driver = session.get('user')
+    if driver:
+        clear_driver_location(driver)
     session.clear()
     return redirect(url_for('landing'))
 
@@ -676,27 +722,58 @@ def get_ip_location():
 
 @app.route('/update_location', methods=['POST'])
 def update_location():
-    """Endpoint to receive location updates from client"""
-    global current_location, location_history
+    """Endpoint to receive location updates from authenticated client"""
+    driver = session.get('user')
+    if not driver:
+        return jsonify({'error': 'Authentication required to update location'}), 401
 
     try:
         location_data = request.get_json()
-        if not location_data:
+        if not location_data or not isinstance(location_data, dict):
             return jsonify({'error': 'No location data provided'}), 400
 
-        # Update current location
-        current_location = location_data
+        # Coordinate extraction and validation
+        raw_lat = location_data.get('lat')
+        raw_lng = location_data.get('lng')
 
-        # Add to history (keep last 10 locations)
-        location_history.append(location_data)
-        if len(location_history) > 10:
-            location_history.pop(0)
+        if raw_lat is None or raw_lng is None:
+            return jsonify({'error': 'Missing coordinates'}), 400
 
-        print(f"Location updated: {location_data}")
+        try:
+            lat = float(raw_lat)
+            lng = float(raw_lng)
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Malformed non-numeric coordinates'}), 400
+
+        import math
+        if not math.isfinite(lat) or not math.isfinite(lng):
+            return jsonify({'error': 'Non-finite coordinates'}), 400
+
+        if not (-90.0 <= lat <= 90.0) or not (-180.0 <= lng <= 180.0):
+            return jsonify({'error': 'Out-of-range coordinates'}), 400
+
+        # Clean sanitized payload without raw terminal leak
+        sanitized_location = {
+            'lat': lat,
+            'lng': lng,
+            'timestamp': location_data.get('timestamp') or time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        if 'accuracy' in location_data:
+            try:
+                acc = float(location_data['accuracy'])
+                if math.isfinite(acc) and acc >= 0:
+                    sanitized_location['accuracy'] = acc
+            except (ValueError, TypeError):
+                pass
+
+        set_driver_location(driver, sanitized_location)
+
+        # Log status without leaking raw coordinates
+        print(f"[SafeDrive Location] Driver '{driver}' location updated successfully (Coordinates redacted for privacy).")
         return jsonify({'status': 'success', 'message': 'Location updated'})
 
     except Exception as e:
-        print(f"Error updating location: {e}")
+        print(f"[SafeDrive Location] Error updating location: {e}")
         return jsonify({'error': str(e)}), 500
 
 EMAIL_SYNTAX_REGEX = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
@@ -1181,4 +1258,13 @@ def api_reset_password():
     })
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False, port=8000)
+    # Ensure production mode strictly forbids debug server
+    is_prod = (os.getenv('FLASK_ENV') == 'production')
+    # Debug mode is strictly False unless explicitly enabled for development
+    enable_debug = (os.getenv('FLASK_DEBUG', 'false').lower() == 'true') and not is_prod
+    port = int(os.getenv('PORT', 8000))
+
+    if is_prod:
+        print("[SafeDrive Production] Notice: Running in production mode. For public deployments, serve using a production WSGI server (e.g. Waitress or Gunicorn).")
+
+    app.run(debug=enable_debug, use_reloader=False, port=port)

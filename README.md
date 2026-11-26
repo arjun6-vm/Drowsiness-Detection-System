@@ -29,7 +29,7 @@
   - **Warning 3 (18 seconds)**: Critical audio buzzer alerting driver to pull over.
   - **Warning 4 / Emergency Alert (24 seconds)**: High-pitch emergency alert and automated dispatch trigger.
 - **Continuous Eyes-Open Recovery**: 3 continuous seconds of open eyes automatically resets the warning cycle and logs a `RESET` event.
-- **Automated Emergency Dispatch**: Sends an emergency email in a background daemon thread exclusively to user-saved trusted emergency contacts (or fallback receiver) containing live browser GPS coordinates (or IP location) and direct navigation links (Google Maps, Waze, Apple Maps).
+- **Automated Emergency Dispatch**: Sends an emergency email in a background daemon thread exclusively to user-saved trusted emergency contacts containing live browser GPS coordinates (or IP location) and direct navigation links (Google Maps, Waze, Apple Maps).
 - **Two-Phase OTP Signup Verification**: Prevents fake accounts by checking email syntax, domain MX records, and validating a 6-digit OTP before user creation.
 - **Duplicate Account Protection**: Unique MongoDB sparse indexes and atomic transaction conflict handling (`HTTP 409`).
 - **OTP Password Reset**: Secure password recovery via time-limited 6-digit email OTPs (no insecure security questions).

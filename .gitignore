@@ -1,18 +1,32 @@
+# Environment and secret files
+.env
+.env.*
+*.env
+!.env.example
+
 # Virtual environments
 .venv/
 new_env/
+venv/
+env/
+ENV/
 
-# Python cache
+# Python cache and bytecode
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
 .pytest_cache/
 
-# User configurations & environment files
-.env
-*.env
-venv/
-
-# Application logs & local database
+# Application logs, telemetry, and runtime exports
+*.log
 drowsiness_logs.csv
+drowsiness_events*.csv
+safedrive_report*.csv
+
+# Local database artifacts & backups
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.tmp
+*.bak
