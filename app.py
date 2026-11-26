@@ -77,7 +77,7 @@ else:
 # MongoDB setup
 mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 mongo_db_name = os.getenv("MONGO_DB_NAME", "drowsiness_db")
-client = pymongo.MongoClient(mongo_uri)
+client = pymongo.MongoClient(mongo_uri, serverSelectionTimeoutMS=2000, connectTimeoutMS=2000, socketTimeoutMS=2000)
 db = client[mongo_db_name]
 logs_collection = db["logs"]
 users_collection = db["users"]
