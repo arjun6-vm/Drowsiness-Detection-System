@@ -1,7 +1,10 @@
 from flask import Flask, has_request_context, render_template, Response, send_file, request, redirect, url_for, session, jsonify
 import cv2
 import mediapipe as mp
-import winsound
+try:
+    import winsound
+except ImportError:
+    winsound = None
 import time
 import os
 import csv
@@ -276,7 +279,7 @@ def generate_frames(driver_username=None):
 
         if eyes_open:
             if beep_playing or alert_playing:
-                winsound.PlaySound(None, winsound.SND_ASYNC)
+                if winsound: winsound.PlaySound(None, winsound.SND_ASYNC)
                 beep_playing = False
                 alert_playing = False
             closed_start_time = None
@@ -303,11 +306,11 @@ def generate_frames(driver_username=None):
                 log_event("warning", f"Eyes closed for {closed_duration:.1f}s", username=driver_username)
                 event_registered = True
                 if warning_count < 4:
-                    winsound.Beep(2000, 3500)
+                    if winsound: winsound.Beep(2000, 3500)
                     beep_playing = True
                     beep_end_time = current_time + 3.5
                 else:
-                    winsound.Beep(3500, 5000)
+                    if winsound: winsound.Beep(3500, 5000)
                     alert_playing = True
                     alert_end_time = current_time + 5.0
                     log_event("alert", "Final alert triggered", username=driver_username)

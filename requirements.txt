@@ -1,8 +1,8 @@
+flask>=2.3.0
+gunicorn>=21.2.0
 opencv-python-headless>=4.8.0.76
 mediapipe>=0.10.14
-streamlit
-streamlit-webrtc
-av
-numpy
-requests
-python-dotenv
+pymongo>=4.5.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+werkzeug>=2.3.0
